@@ -3,8 +3,17 @@ import ConnectWallet from '@/components/ConnectWallet'
 import { ShareIcon } from '@heroicons/react/outline'
 import ThemeSwitcher from '@/components/ThemeSwitcher'
 import { useAccount } from 'wagmi'
+import { ethers } from 'ethers'
+import { SiweMessage } from "siwe"
 
-async function getNonce(url = '', data = {}) {
+const BASE_URL = "127.0.0.1:8080/"
+const nonce_url = BASE_URL + "get_nonce"
+const login_url = BASE_URL + "login"
+
+const domain = "window.location.host";
+const origin = "window.location.origin";
+
+async function post(url = '', data = {}) {
 	
 	const response = await fetch(url, {
 	  method: 'POST',
@@ -20,8 +29,28 @@ async function getNonce(url = '', data = {}) {
 	return response.json();
   }
 
-  function printAddress(address={}) {
-	console.log(address)
+  function createSiweMessage(address, statement) {
+    let _nonce = post(nonce_url, {"address": address})
+	let nonce_ = null;
+	for (const [key, value] of Object.entries(_nonce)) {
+		nonce_ = key;
+	}
+
+	const message = new SiweMessage({
+        domain,
+        address,
+        statement,
+        uri: origin,
+		nonce: nonce_,
+        version: '1',
+        chainId: 1
+    });
+    return message.prepareMessage();
+}
+
+  async function signIn(address='') {
+	let messagehash = createSiweMessage(address, "temp statement")
+	//post(login_url, [{"address":address}, {"msghash":messagehash}])
   }
 
 const Home: FC = () => {
@@ -39,7 +68,7 @@ const Home: FC = () => {
 				</div>
 
 				<div className="mt-8 bg-white dark:bg-blue-400 text-center overflow-hidden shadow sm:rounded-lg">
-				<button className="rounded-md" onClick={() => {printAddress({add: address})}}>Sign In</button>
+				<button className="rounded-md" onClick={() => {signIn(address)}}>Sign In</button>
 				</div>
 				
 				<div className="flex justify-center mt-4 sm:items-center sm:justify-between">
