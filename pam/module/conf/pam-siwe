@@ -1,0 +1,3 @@
+auth sufficient siwe_pam.so
+account sufficient siwe_pam.so
+
